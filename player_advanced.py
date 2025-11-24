@@ -195,7 +195,7 @@ def main():
     with RAW_PATH.open("r", encoding="utf-8") as f:
         raw_players = json.load(f)
     print(f"讀入 {len(raw_players)} 筆球員 raw stats")
-
+        
     # 算進階數據
     advanced = build_player_advanced(raw_players)
 
@@ -210,8 +210,8 @@ def main():
         json.dump(advanced, f, ensure_ascii=False, indent=2)
 
     print(f"已將球員進階數據寫入 {OUTPUT_PATH}\n")
-    print("前 5 位球員（依 TS% 排序）：")
-    for p in advanced[:5]:
+    print("全部球員（依 TS% 排序）：")
+    for p in advanced:
         print(
             f'{p["player_name"]} ({p["team_name"]}) - '
             f'PTS {fmt(p["pts"],1)}, '
@@ -219,6 +219,7 @@ def main():
             f'eFG {fmt(p.get("efg_official"))}, '
             f'USG_share {fmt(p.get("usage_share"))}'
         )
+
 
 
 if __name__ == "__main__":
