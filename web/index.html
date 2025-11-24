@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>TPBL 進階數據分析</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>TPBL 進階數據分析 Dashboard</h1>
+    <nav class="tabs">
+      <button class="tab-button active" data-target="teams-section">球隊資訊</button>
+      <button class="tab-button" data-target="players-section">球員資訊</button>
+      <button class="tab-button" data-target="schedule-section">賽程資訊</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 球隊資訊 -->
+    <section id="teams-section" class="tab-section active">
+      <h2>球隊進階數據（Team Advanced Stats）</h2>
+      <p class="section-desc">顯示各球隊的 eFG%、TS%、OffRtg、DefRtg 等指標。</p>
+      <table id="team-table">
+        <thead>
+          <tr>
+            <th>球隊</th>
+            <th>eFG%</th>
+            <th>TS%</th>
+            <th>OffRtg</th>
+            <th>DefRtg</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- 球員資訊 -->
+    <section id="players-section" class="tab-section">
+      <h2>球員進階數據（Player Advanced Stats）</h2>
+      <p class="section-desc">顯示球員的得分、TS%、eFG%、使用率等指標。</p>
+      <table id="player-table">
+        <thead>
+          <tr>
+            <th>球員</th>
+            <th>球隊</th>
+            <th>PTS</th>
+            <th>TS%</th>
+            <th>eFG%</th>
+            <th>USG_share</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- 賽程資訊 -->
+    <section id="schedule-section" class="tab-section">
+      <h2>賽程與結果（Schedule & Results）</h2>
+      <p class="section-desc">顯示每場比賽的日期、對戰組合與比分。</p>
+      <table id="schedule-table">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>主隊</th>
+            <th>客隊</th>
+            <th>比分</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>資料來源：TPBL 官網爬蟲整理 · 本頁面僅供課程專案使用</p>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>

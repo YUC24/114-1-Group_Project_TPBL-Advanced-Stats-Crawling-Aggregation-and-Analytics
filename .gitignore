@@ -1,0 +1,13 @@
+# Python virtual environment
+venv/
+.venv/
+
+# macOS junk
+.DS_Store
+
+# Data outputs
+data/*.json
+
+# Python cache
+__pycache__/
+*.pyc
