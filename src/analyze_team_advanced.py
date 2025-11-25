@@ -3,12 +3,13 @@
 # 讀取 data/team_stats.json，將每支球隊在所有已完成比賽中的數據加總，
 # 並計算一些進階指標（eFG%、TS%、OffRtg、DefRtg），
 # 存成 data/team_advanced.json，並在終端機印出一個排行榜。
+#好耶
 
 import json
 from pathlib import Path
 from math import isnan
 
-TEAM_STATS_PATH = Path("data/team_stats.json")
+TEAM_STATS_PATH = Path("data/team_stats.jsons")
 OUTPUT_PATH = Path("data/team_advanced.json")
 
 
