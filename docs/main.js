@@ -25,7 +25,8 @@ function setupTabs() {
 // --- 讀取球隊進階數據 ---
 async function loadTeamStats() {
   try {
-    const res = await fetch('../data/team_advanced.json');
+    const res = await fetch('./data/team_advanced.json')
+;
     const teams = await res.json();
 
     const tbody = document.querySelector('#team-table tbody');
@@ -50,7 +51,7 @@ async function loadTeamStats() {
 // --- 讀取球員進階數據 ---
 async function loadPlayerStats() {
   try {
-    const res = await fetch('../data/player_advanced.json');
+    const res = await fetch('./data/team_advanced.json');
     const players = await res.json();
 
     const tbody = document.querySelector('#player-table tbody');
@@ -86,7 +87,7 @@ async function loadPlayerStats() {
 // ]
 async function loadSchedule() {
   try {
-    const res = await fetch('../data/schedule.json');
+    const res = await fetch('./data/team_advanced.json');
     const games = await res.json();
 
     const tbody = document.querySelector('#schedule-table tbody');
