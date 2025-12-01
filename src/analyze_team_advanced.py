@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from math import isnan
 
-TEAM_STATS_PATH = Path("data/team_stats.jsons")
+TEAM_STATS_PATH = Path("data/team_stats_raw.json")
 OUTPUT_PATH = Path("data/team_advanced.json")
 
 

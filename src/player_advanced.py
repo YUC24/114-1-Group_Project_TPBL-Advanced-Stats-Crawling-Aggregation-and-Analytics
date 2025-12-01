@@ -1,15 +1,19 @@
 import json
 from pathlib import Path
-from collections import defaultdict
 
-# ✅ 正確路徑統一寫這裡
-RAW_PATH = Path("data/player_stats_raw.json")   # ← 注意這裡是 player_stats_raw
-OUTPUT_PATH = Path("data/player_advanced.json")
+# 正確路徑統一寫這裡（raw → advanced 都放 data/）
+RAW_PATH = Path("data/player_stats_raw.json")   # 爬蟲輸出 raw 檔
+OUTPUT_PATH = Path("data/player_advanced.json")  # 本檔輸出進階數據
 
 
 def safe_div(n, d):
-    """安全除法，避免除以 0，回傳 None。"""
-    return n / d if d else None
+    """安全除法：除以 0 或型態怪怪的就回傳 None。"""
+    try:
+        if d in (None, 0):
+            return None
+        return n / d
+    except Exception:
+        return None
 
 
 def load_raw_players():
@@ -18,31 +22,41 @@ def load_raw_players():
     print(f"讀入 {len(data)} 筆球員 raw stats")
     return data
 
+
 def compute_team_usage_totals(raw_players):
     """
-    對每隊計算簡化版 usage 總量：
-    usage_base = FGA + 0.44*FTA + TOV
-    這裡用的是「場均數據」（average_stats），
-    之後球員的 usage_share = 個人 usage_base / 全隊 usage_base
+    對每一隊，把隊上所有球員的「用球權相關數值」加總起來，
+    例如 FGA、FTA、TOV 等，之後算 usage ratio 會用到。
+    team_usage_totals[team_id] = {"fga": ..., "fta": ..., "tov": ...}
     """
-    team_usage = defaultdict(float)
+    team_usage_totals = {}
 
-    for row in raw_players:
-        team = row.get("team", {})
+    for p in raw_players:
+        team = p.get("team")
+
+        # 有些球員可能沒有 team（team 為 None 或不是 dict），直接跳過
+        if not isinstance(team, dict):
+            continue
+
         team_id = team.get("id")
+        if team_id is None:
+            continue
 
-        stats_avg = row.get("average_stats", {}) or {}
+        stats = p.get("accumulated_stats") or {}
 
-        # 這些 key 全部來自你貼的 JSON 裡的 average_stats
-        fga = float(stats_avg.get("field_goals_attempted", 0.0))
-        fta = float(stats_avg.get("free_throws_attempted", 0.0))
-        tov = float(stats_avg.get("turnovers", 0.0))
+        # ⚠ 這裡欄位名稱要依 raw JSON 實際 key 調整
+        fga = stats.get("fga", 0) or 0
+        fta = stats.get("fta", 0) or 0
+        tov = stats.get("turnovers", 0) or 0
 
-        usage_base = fga + 0.44 * fta + tov
-        if team_id is not None:
-            team_usage[team_id] += usage_base
+        if team_id not in team_usage_totals:
+            team_usage_totals[team_id] = {"fga": 0.0, "fta": 0.0, "tov": 0.0}
 
-    return team_usage
+        team_usage_totals[team_id]["fga"] += float(fga)
+        team_usage_totals[team_id]["fta"] += float(fta)
+        team_usage_totals[team_id]["tov"] += float(tov)
+
+    return team_usage_totals
 
 
 def pct_to_float(p):
@@ -54,7 +68,7 @@ def pct_to_float(p):
         return None
     try:
         return float(p) / 100.0
-    except:
+    except Exception:
         return None
 
 
@@ -63,20 +77,23 @@ def build_player_advanced(raw_players):
     result = []
 
     for row in raw_players:
-        player = row.get("player", {}) or {}
-        team = row.get("team", {}) or {}
-        stats_avg = row.get("average_stats", {}) or {}
-        stats_acc = row.get("accumulated_stats", {}) or {}
-        pct = row.get("percentage_stats", {}) or {}
+        player = row.get("player") or {}
+        team = row.get("team") or {}
+        stats_avg = row.get("average_stats") or {}
+        stats_acc = row.get("accumulated_stats") or {}
+        pct = row.get("percentage_stats") or {}
 
+        # ===== 基本資訊 =====
         player_id = player.get("id")
         player_name = player.get("name", "N/A")
+
         team_id = team.get("id")
         team_name = team.get("name", "N/A")
 
-        games = row.get("game_count", 0)
+        games = row.get("game_count", 0) or 0
 
-        # ===== 場均數據（全部從 average_stats 抓） =====
+        # ===== 場均數據（從 average_stats 抓）=====
+        # ⚠ 如果你的 key 實際不是這些（例如 "points" 而不是 "score"），這裡要自己改一下
         pts = float(stats_avg.get("score", 0.0))
         reb = float(stats_avg.get("rebounds", 0.0))
         ast = float(stats_avg.get("assists", 0.0))
@@ -93,14 +110,14 @@ def build_player_advanced(raw_players):
         ftm = float(stats_avg.get("free_throws_made", 0.0))
         fta = float(stats_avg.get("free_throws_attempted", 0.0))
 
-        # time_on_court 是毫秒? 這裡假設是「秒」，所以 /60 變成每場分鐘數
+        # time_on_court：這裡假設單位是「秒」，所以 /60 變成每場分鐘數
         time_on_court = float(stats_avg.get("time_on_court", 0.0))
         min_per_game = time_on_court / 60.0
 
         # 官方給的效率值（場均）
         eff_raw = float(stats_avg.get("efficiency", 0.0))
 
-        # ===== 百分比（官方已算好，我們直接轉成 0.x） =====
+        # ===== 百分比（官方已算好，我們轉成 0.x）=====
         efg = pct_to_float(pct.get("effective_field_goals_percentage"))
         ts = pct_to_float(pct.get("true_shooting_percentage"))
         tov_pct_official = pct_to_float(pct.get("turnovers_percentage"))
@@ -113,9 +130,21 @@ def build_player_advanced(raw_players):
         # 3PAr（三分出手比例） = 3PA / FGA
         three_par = safe_div(three_pa, fga)
 
-        # 簡化版 Usage：個人使用回合 / 全隊使用回合
+        # 個人使用回合（usage_base）
         usage_base = fga + 0.44 * fta + tov
-        team_total_usage = team_usage_totals.get(team_id, 0.0)
+
+        # 全隊使用回合（team_total_usage）＝隊上所有球員 FGA+0.44FTA+TOV 加總
+        team_totals = team_usage_totals.get(team_id) if team_id is not None else None
+        if isinstance(team_totals, dict):
+            team_total_usage = (
+                (team_totals.get("fga", 0) or 0)
+                + 0.44 * (team_totals.get("fta", 0) or 0)
+                + (team_totals.get("tov", 0) or 0)
+            )
+        else:
+            team_total_usage = None
+
+        # Usage share（個人用球權在全隊的比例）
         usage_share = safe_div(usage_base, team_total_usage)
 
         # PPP（Points Per Possession，個人佔用回合的得分）
@@ -129,59 +158,51 @@ def build_player_advanced(raw_players):
             - tov
         )
 
-        result.append({
-            "player_id": player_id,
-            "player_name": player_name,
-            "team_id": team_id,
-            "team_name": team_name,
-            "games": games,
-            "min_pg": min_per_game,
-
-            # 場均 boxscore
-            "pts": pts,
-            "reb": reb,
-            "ast": ast,
-            "stl": stl,
-            "blk": blk,
-            "tov": tov,
-            "fgm": fgm,
-            "fga": fga,
-            "three_pm": three_pm,
-            "three_pa": three_pa,
-            "ftm": ftm,
-            "fta": fta,
-            "eff_raw": eff_raw,
-
-            # 官方給的進階命中率
-            "efg_official": efg,
-            "ts_official": ts,
-            "tov_pct_official": tov_pct_official,
-
-            # 我們自己算的進階數據
-            "ft_rate": ft_rate,
-            "three_par": three_par,
-            "usage_share": usage_share,
-            "ppp": ppp,
-            "per_simple": per_simple,
-        })
+        result.append(
+            {
+                "player_id": player_id,
+                "player_name": player_name,
+                "team_id": team_id,
+                "team_name": team_name,
+                "games": games,
+                "min_pg": min_per_game,
+                # 場均 boxscore
+                "pts": pts,
+                "reb": reb,
+                "ast": ast,
+                "stl": stl,
+                "blk": blk,
+                "tov": tov,
+                "fgm": fgm,
+                "fga": fga,
+                "three_pm": three_pm,
+                "three_pa": three_pa,
+                "ftm": ftm,
+                "fta": fta,
+                "eff_raw": eff_raw,
+                # 官方給的進階命中率
+                "efg_official": efg,
+                "ts_official": ts,
+                "tov_pct_official": tov_pct_official,
+                # 我們自己算的進階數據
+                "ft_rate": ft_rate,
+                "three_par": three_par,
+                "usage_share": usage_share,
+                "ppp": ppp,
+                "per_simple": per_simple,
+            }
+        )
 
     return result
 
-def fmt(v, digits=3):
+
+def fmt(v, d=3):
     """安全格式化：None → '--'，其他數字照正常格式輸出"""
     if v is None:
         return "--"
     try:
-        return f"{v:.{digits}f}"
-    except:
-        return str(v)
-
-def fmt(v, d=3):
-    if v is None:
-        return "--"
-    try:
         return f"{v:.{d}f}"
-    except:
+    except Exception:
         return str(v)
 
 
@@ -195,7 +216,7 @@ def main():
     with RAW_PATH.open("r", encoding="utf-8") as f:
         raw_players = json.load(f)
     print(f"讀入 {len(raw_players)} 筆球員 raw stats")
-        
+
     # 算進階數據
     advanced = build_player_advanced(raw_players)
 
@@ -214,12 +235,11 @@ def main():
     for p in advanced:
         print(
             f'{p["player_name"]} ({p["team_name"]}) - '
-            f'PTS {fmt(p["pts"],1)}, '
+            f'PTS {fmt(p["pts"], 1)}, '
             f'TS {fmt(p.get("ts_official"))}, '
             f'eFG {fmt(p.get("efg_official"))}, '
             f'USG_share {fmt(p.get("usage_share"))}'
         )
-
 
 
 if __name__ == "__main__":

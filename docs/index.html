@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
   <meta charset="UTF-8" />
   <title>TPBL 進階數據分析</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+
   <header>
     <h1>TPBL 進階數據分析 Dashboard</h1>
     <nav class="tabs">
@@ -14,6 +17,43 @@
       <button class="tab-button" data-target="schedule-section">賽程資訊</button>
     </nav>
   </header>
+
+  <!-- 🔽 新增這一整段 🔽 -->
+  <section id="games-section">
+    <h2>比賽數據</h2>
+
+    <div id="filters">
+      <label>
+        日期從：
+        <input type="date" id="dateFrom">
+      </label>
+
+      <label>
+        到：
+        <input type="date" id="dateTo">
+      </label>
+
+      <button id="clearDate">清除日期</button>
+    </div>
+
+    <table id="gameTable">
+      <thead>
+        <tr>
+          <!-- data-type 決定這一欄可以排序，以及用什麼型態排序 -->
+          <th data-type="date">日期 ▲▼</th>
+          <th>對戰</th>
+          <th data-type="number">得分 ▲▼</th>
+          <th data-type="number">失分 ▲▼</th>
+          <th data-type="number">TS% ▲▼</th>
+        </tr>
+      </thead>
+      <tbody>
+        </tr>
+        <!-- 之後可以改成 main.js 自動生 -->
+      </tbody>
+    </table>
+  </section>
+  <!-- 🔼 新增到這裡 🔼 -->
 
   <main>
     <!-- 球隊資訊 -->
@@ -54,27 +94,290 @@
     </section>
 
     <!-- 賽程資訊 -->
-    <section id="schedule-section" class="tab-section">
-      <h2>賽程與結果（Schedule & Results）</h2>
-      <p class="section-desc">顯示每場比賽的日期、對戰組合與比分。</p>
-      <table id="schedule-table">
+    <!DOCTYPE html>
+    <html lang="zh-Hant">
+
+    <head>
+      <meta charset="UTF-8" />
+      <title>TPBL 賽程查詢</title>
+      <style>
+        body {
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+            sans-serif;
+          margin: 20px;
+        }
+
+        h1 {
+          margin-bottom: 16px;
+        }
+
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          max-width: 1200px;
+        }
+
+        th,
+        td {
+          border: 1px solid #ccc;
+          padding: 6px 8px;
+          text-align: center;
+          font-size: 14px;
+        }
+
+        th {
+          background: #f2f2f2;
+        }
+
+        tbody tr:nth-child(even) {
+          background: #fafafa;
+        }
+      </style>
+    </head>
+
+    <body>
+      <h1>TPBL 賽程</h1>
+
+      <!-- 之後如果要加篩選可以放在這裡 -->
+      <!-- <div>篩選區塊...</div> -->
+
+      <table>
         <thead>
           <tr>
             <th>日期</th>
+            <th>時間</th>
+            <th>星期</th>
             <th>主隊</th>
             <th>客隊</th>
-            <th>比分</th>
+            <th>場館</th>
+            <th>賽事代碼</th>
+            <th>狀態</th>
+            <th>轉播連結</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="games-body">
+          <!-- JS 會把每一場比賽插在這裡 -->
+        </tbody>
       </table>
-    </section>
-  </main>
 
-  <footer>
-    <p>資料來源：TPBL 官網爬蟲整理 · 本頁面僅供課程專案使用</p>
-  </footer>
+      <script>
+        // 讀取 data/games.json 並塞進表格
+        async function loadGames() {
+          try {
+            const res = await fetch('data/games.json');
+            if (!res.ok) {
+              throw new Error('HTTP error ' + res.status);
+            }
+            const games = await res.json();
 
-  <script src="main.js"></script>
+            const tbody = document.getElementById('games-body');
+
+            games.forEach(game => {
+              const tr = document.createElement('tr');
+
+              // 日期
+              const tdDate = document.createElement('td');
+              tdDate.textContent = game.date || '';
+              tr.appendChild(tdDate);
+
+              // 時間
+              const tdTime = document.createElement('td');
+              tdTime.textContent = game.time || '';
+              tr.appendChild(tdTime);
+
+              // 星期
+              const tdDow = document.createElement('td');
+              tdDow.textContent = game.day_of_week || '';
+              tr.appendChild(tdDow);
+
+              // 主隊
+              const tdHome = document.createElement('td');
+              tdHome.textContent = game.home_team_name || '';
+              tr.appendChild(tdHome);
+
+              // 客隊
+              const tdAway = document.createElement('td');
+              tdAway.textContent = game.away_team_name || '';
+              tr.appendChild(tdAway);
+
+              // 場館
+              const tdVenue = document.createElement('td');
+              tdVenue.textContent = game.venue || '';
+              tr.appendChild(tdVenue);
+
+              // 賽事代碼（code）
+              const tdCode = document.createElement('td');
+              tdCode.textContent = game.code || '';
+              tr.appendChild(tdCode);
+
+              // 狀態
+              const tdStatus = document.createElement('td');
+              tdStatus.textContent = game.status || '';
+              tr.appendChild(tdStatus);
+
+              // 轉播 / recap 連結
+              const tdLink = document.createElement('td');
+              const links = [];
+
+              if (game.live_stream_url) {
+                const aLive = document.createElement('a');
+                aLive.href = game.live_stream_url;
+                aLive.target = '_blank';
+                aLive.textContent = '直播';
+                links.push(aLive);
+              }
+
+              if (game.recap_url) {
+                const aRecap = document.createElement('a');
+                aRecap.href = game.recap_url;
+                aRecap.target = '_blank';
+                aRecap.textContent = '精華';
+                links.push(aRecap);
+              }
+
+              if (links.length === 0) {
+                tdLink.textContent = '-';
+              } else {
+                // 用空格分隔多個連結
+                links.forEach((el, idx) => {
+                  if (idx > 0) tdLink.appendChild(document.createTextNode(' '));
+                  tdLink.appendChild(el);
+                });
+              }
+
+              tr.appendChild(tdLink);
+
+              tbody.appendChild(tr);
+            });
+          } catch (err) {
+            console.error('載入 games.json 失敗：', err);
+            const tbody = document.getElementById('games-body');
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 9;
+            td.textContent = '載入賽程資料失敗，請稍後再試。';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+          }
+        }
+
+        loadGames();
+
+      </script>
+    </body>
+
+    </html>
+
+
+    <footer>
+      <p>資料來源：TPBL 官網爬蟲整理 · 本頁面僅供課程專案使用</p>
+    </footer>
+
+    <script src="main.js"></script>
+
+    <!-- 放在最下面的日期篩選＋排序程式 -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const table = document.getElementById('gameTable');
+        if (!table) return; // 保險一下
+
+        const tbody = table.querySelector('tbody');
+        const allRows = Array.from(tbody.querySelectorAll('tr')); // 所有列
+
+        const dateFromInput = document.getElementById('dateFrom');
+        const dateToInput = document.getElementById('dateTo');
+        const clearBtn = document.getElementById('clearDate');
+
+        // ========= ① 日期篩選 =========
+        function applyDateFilter() {
+          const from = dateFromInput.value; // e.g. "2024-11-01" or ""
+          const to = dateToInput.value;
+
+          allRows.forEach(row => {
+            const rowDate = row.getAttribute('data-date'); // 同樣是 YYYY-MM-DD
+            let visible = true;
+
+            if (from && rowDate < from) {
+              visible = false;
+            }
+            if (to && rowDate > to) {
+              visible = false;
+            }
+
+            row.style.display = visible ? '' : 'none';
+          });
+        }
+
+        dateFromInput.addEventListener('change', applyDateFilter);
+        dateToInput.addEventListener('change', applyDateFilter);
+        clearBtn.addEventListener('click', () => {
+          dateFromInput.value = '';
+          dateToInput.value = '';
+          applyDateFilter();
+        });
+
+        // ========= ② 點表頭排序 =========
+        let currentSortCol = null;
+        let currentSortAsc = true;
+
+        const headers = Array.from(table.querySelectorAll('thead th'));
+
+        headers.forEach((th, colIndex) => {
+          const type = th.dataset.type; // "number" 或 "date"，如果沒設就不排序
+          if (!type) return;
+
+          th.style.cursor = 'pointer'; // 滑鼠變手指
+
+          th.addEventListener('click', () => {
+            // 如果點同一欄，反轉排序方向；否則改成升冪
+            if (currentSortCol === colIndex) {
+              currentSortAsc = !currentSortAsc;
+            } else {
+              currentSortCol = colIndex;
+              currentSortAsc = true;
+            }
+
+            // 把所有列拿出來排序（即使有的列目前被隱藏，沒關係）
+            const rowsToSort = Array.from(allRows);
+
+            rowsToSort.sort((a, b) => {
+              let aVal, bVal;
+
+              if (type === 'number') {
+                aVal = parseFloat(a.children[colIndex].innerText) || 0;
+                bVal = parseFloat(b.children[colIndex].innerText) || 0;
+              } else if (type === 'date') {
+                // 這裡直接用 data-date 來比對，比 innerText 安全
+                aVal = a.getAttribute('data-date');
+                bVal = b.getAttribute('data-date');
+              } else {
+                aVal = a.children[colIndex].innerText;
+                bVal = b.children[colIndex].innerText;
+              }
+
+              if (aVal < bVal) return currentSortAsc ? -1 : 1;
+              if (aVal > bVal) return currentSortAsc ? 1 : -1;
+              return 0;
+            });
+
+            // 排完重新 append 回 tbody（DOM 會依新順序顯示）
+            rowsToSort.forEach(row => tbody.appendChild(row));
+
+            // 更新箭頭文字（簡單版）
+            headers.forEach(h => {
+              if (!h.dataset.type) return;
+              h.textContent = h.textContent.replace(/ ▲▼| ▲| ▼/g, '');
+              if (h === th) {
+                h.textContent += currentSortAsc ? ' ▲' : ' ▼';
+              } else {
+                h.textContent += ' ▲▼';
+              }
+            });
+          });
+        });
+      });
+    </script>
+
 </body>
+
 </html>

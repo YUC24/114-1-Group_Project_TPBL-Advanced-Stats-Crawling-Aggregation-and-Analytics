@@ -3,8 +3,7 @@ import json
 from pathlib import Path
 
 API_URL = "https://api.tpbl.basketball/api/games/stats/players?division_id=9"
-INPUT = Path("data/player_stats_raw.json")
-OUTPUT = Path("data/player_advanced.json")
+OUTPUT = Path("data/player_stats_raw.json")
 
 def fetch_player_stats():
     headers = {

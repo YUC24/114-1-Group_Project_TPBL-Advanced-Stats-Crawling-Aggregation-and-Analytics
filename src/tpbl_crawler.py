@@ -83,7 +83,7 @@ def normalize_games(raw_games):
     return games
 
 
-def save_games_to_json(games, path="data/games.json"):
+def save_games_to_json(games, path="data/tpbl_crawler_raw.json"):
     """
     把整理好的 games list 存成 JSON 檔案。
     """
@@ -112,7 +112,7 @@ def main():
         )
 
     save_games_to_json(games)
-    print("\n已儲存整理後的賽程到 data/games.json")
+    print("\n已儲存整理後的賽程到 data/tpbl_crawler_raw.json")
 
 
 if __name__ == "__main__":

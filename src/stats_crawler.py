@@ -13,7 +13,7 @@ import time
 import requests
 
 
-GAMES_PATH = Path("data/games.json")
+GAMES_PATH = Path("data/tpbl_crawler_raw.json")
 GAME_STATS_URL = "https://api.tpbl.basketball/api/games/{game_id}/stats"
 DIVISION_PLAYERS_URL = "https://api.tpbl.basketball/api/divisions/9/players"
 
@@ -37,9 +37,9 @@ def http_get_json(url):
 # -------- 讀取既有的 games.json --------
 
 def load_games():
-    """載入 data/games.json，回傳 list[dict]。"""
+    """載入 data/tpbl_crawler_raw.json，回傳 list[dict]。"""
     if not GAMES_PATH.exists():
-        print("找不到 data/games.json，請先執行 tpbl_crawler.py。")
+        print("找不到 data/tpbl_crawler_raw.json，請先執行 tpbl_crawler.py。")
         return []
 
     with GAMES_PATH.open("r", encoding="utf-8") as f:
@@ -187,7 +187,7 @@ def crawl_all_team_stats():
         # 禮貌一點，避免對 API 太兇
         time.sleep(0.2)
 
-    out_path = Path("data/team_stats.json")
+    out_path = Path("data/team_stats_raw.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(all_rows, f, ensure_ascii=False, indent=2)
@@ -204,7 +204,7 @@ def crawl_division_players():
     print("抓取 division 9 的球員清單...")
     data = http_get_json(DIVISION_PLAYERS_URL)
 
-    out_path = Path("data/players_master.json")
+    out_path = Path("data/players_master_raw.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
