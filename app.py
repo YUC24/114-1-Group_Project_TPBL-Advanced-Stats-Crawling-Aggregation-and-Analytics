@@ -70,7 +70,7 @@ def show_team_page():
 
     team_row = sorted_df[sorted_df[team_col_name] == selected_team].iloc[0]
 
-    st.markdown("### 📊 球隊 Summary")
+    st.markdown("### 球隊 Summary")
     cols = st.columns(4)
 
     games = team_row.get("games", None)
@@ -93,7 +93,7 @@ def show_team_page():
         if net_rtg is not None:
             st.metric("NetRtg", f"{net_rtg:.1f}")
 
-    st.markdown("### 📋 全部球隊列表 (All teams)")
+    st.markdown("### 全部球隊列表 (All teams)")
     st.dataframe(sorted_df, use_container_width=True)
 
 
@@ -157,7 +157,7 @@ def show_player_page():
         sorted_df = df
 
     # --- 4️⃣ 顯示主表 ---
-    st.markdown("### 📋 球員列表 (Players)")
+    st.markdown("### 球員列表 (Players)")
     display_cols = [
         c
         for c in [
@@ -180,7 +180,7 @@ def show_player_page():
     st.dataframe(sorted_df[display_cols], use_container_width=True)
 
     # --- 5️⃣ 單一球員 Summary ---
-    st.markdown("### 🔍 單一球員 Summary")
+    st.markdown("### 單一球員 Summary")
 
     name_col = "player_name" if "player_name" in sorted_df.columns else sorted_df.columns[0]
     player_options = sorted_df[name_col].astype(str).tolist()
@@ -220,7 +220,7 @@ def main():
         layout="wide",
     )
 
-    st.title("TPBL 進階數據分析 Dashboard (Streamlit)")
+    st.title("TPBL 進階數據分析 Dashboard")
     st.caption("資料來源：TPBL 官網 API + 自行計算進階數據")
 
     page = st.sidebar.radio(
